@@ -5,89 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Society Maintenance Payment Status</title>
     <style>
-      /* Loader Styles */
-      #loader {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #fff; /* Same as page background */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
-      }
-
-      #loader.hidden {
-        opacity: 0;
-        visibility: hidden;
-      }
-
-      /* Page Content Styling */
+      /* General Styling */
       body {
         font-family: Arial, sans-serif;
-        margin: 20px;
         text-align: center;
+        margin: 20px;
         background: url('https://raw.githubusercontent.com/Nimeshpatel90/Harikrupa-Society/c9979706902be5ce4affe8f00ea6228bb4bbfe20/wave.svg') no-repeat center bottom;
         background-size: cover;
-        height: 100%;
-        width: 100%;
+        height: 100vh;
       }
 
       #logo {
-        max-width: 800px;
+        max-width: 500px;
+        margin: 20px auto;
         display: block;
-        margin: auto;
+      }
+
+      /* Input and Button Styling */
+      input, select, button {
+        margin: 10px 5px;
+        padding: 10px;
+        border: 1px solid rgba(0, 0, 0, 0.5);
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      button:hover {
+        background: rgba(0, 0, 0, 0.1);
       }
 
       table {
-        width: 80%;
         margin: 20px auto;
         border-collapse: collapse;
+        width: 80%;
+      }
+
+      th, td {
+        padding: 10px;
+        border: 1px solid #ccc;
         text-align: center;
       }
 
-      th,
-      td {
-        padding: 10px;
-        border: 1px solid #ccc; /* Optional border */
-      }
-
-      /* Row Styling Based on Payment Status */
       .paid-row {
-        color: black; /* Black font for paid */
+        background-color: rgba(0, 0, 0, 0.1);
+        color: black;
       }
 
       .pending-row {
-        color: white; /* White font for pending */
-        font-weight: bold; /* Bold for pending */
-        background-color: rgba(255, 0, 0, 0.4); /* Optional for visibility */
-      }
-
-      .container {
-        margin: 20px auto;
+        background-color: rgba(255, 127, 127, .1);
+        color: rgba(112, 41, 99, 1);
+        font-weight: bold;
       }
     </style>
   </head>
   <body>
-
-
-    <!-- Page Content -->
     <img
       id="logo"
       src="https://raw.githubusercontent.com/Nimeshpatel90/society-maintenance/main/Logo.png"
       alt="Society Logo"
     />
     <h2>Society Maintenance Payment Status</h2>
-    <div class="container">
+    <div>
       <label for="searchHouse">Search by House No.:</label>
-      <input
-        type="text"
-        id="searchHouse"
-        placeholder="Enter House No. (e.g., B/07)"
-      />
+      <input type="text" id="searchHouse" placeholder="Enter House No. (e.g., B/07)" />
       <label for="statusFilter">Filter by Status:</label>
       <select id="statusFilter">
         <option value="all">All</option>
@@ -102,127 +82,103 @@
       </thead>
       <tbody></tbody>
     </table>
-    <img
-      id="qrcode"
-      src="https://raw.githubusercontent.com/Nimeshpatel90/Harikrupa-Society/refs/heads/main/qrcode.jpeg"
-      alt="QR Code for Payment"
-    />
-    <p>
-      <b
-        >Please make payment using the QR Code and share details on Harikrupa
-        Society WhatsApp Group</b
-      >
-    </p>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script>
       const sheetUrl =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuo32w3JKptA5vRALRwDIpTK8f7e7clNfXc5VC7RpLDa_nd2e2rVfyqpZ8wEbg9Zp6ESAydUw35DIO/pub?gid=484381785&single=true&output=csv";
+
       let paymentData = [];
       let headers = [];
+
+      // Fetch Data Function
       async function fetchData() {
         try {
-          const response = await fetch(sheetUrl + "&t=" + new Date().getTime());
+          // Log the URL being fetched
+          console.log("Fetching data from:", sheetUrl);
+          const response = await fetch(sheetUrl + "&t=" + new Date().getTime()); // Prevent caching with a timestamp
+          
+          // Check for HTTP errors
           if (!response.ok) {
             throw new Error(`HTTP Error: ${response.status}`);
           }
+
+          // Parse the raw CSV text
           const csvData = await response.text();
+          console.log("Raw CSV Data:", csvData);
+
+          // Use PapaParse to convert CSV into JSON
           Papa.parse(csvData, {
             header: true,
             skipEmptyLines: true,
             complete: function (results) {
-              headers = results.meta.fields;
+              console.log("Parsed Data:", results.data); // Debug parsed data
               paymentData = results.data;
+              headers = results.meta.fields;
               updateTableHeaders();
-            },
+            }
           });
         } catch (error) {
-          console.error("Error fetching data:", error);
-          alert("Unable to fetch data. Please try again later.");
+          console.error("Data fetch error:", error);
+          alert("Failed to fetch data. Please check the sheet URL and network connection.");
         }
       }
 
+      // Update Table Headers
       function updateTableHeaders() {
-        const headerRow = document.getElementById("tableHeader");
-        headerRow.innerHTML = ""; // Clear any existing headers
+        const tableHeader = document.getElementById("tableHeader");
+        tableHeader.innerHTML = ""; // Clear existing headers
         headers.forEach((header) => {
           const th = document.createElement("th");
           th.textContent = header;
-          headerRow.appendChild(th);
+          tableHeader.appendChild(th);
         });
+        console.log("Table headers updated.");
       }
 
+      // Search Data Function
       function searchData() {
-        const searchInput = document
-          .getElementById("searchHouse")
-          .value.trim()
-          .toUpperCase();
+        const searchInput = document.getElementById("searchHouse").value.trim().toUpperCase();
         const statusFilter = document.getElementById("statusFilter").value;
         const tableBody = document.querySelector("#paymentTable tbody");
         const table = document.getElementById("paymentTable");
+
         tableBody.innerHTML = ""; // Clear existing rows
+
         const filteredData = paymentData.filter((entry) => {
-          const matchesHouse =
-            !searchInput ||
-            entry["House No."].toUpperCase() === searchInput;
+          const matchesHouse = !searchInput || entry["House No."].toUpperCase() === searchInput;
           const matchesStatus =
             statusFilter === "all" ||
-            (statusFilter === "paid" &&
-              entry["Payment Status"]
-                .toLowerCase()
-                .includes("paid")) ||
-            (statusFilter === "pending" &&
-              entry["Payment Status"]
-                .toLowerCase()
-                .includes("pending"));
+            (statusFilter === "paid" && entry["Payment Status"].toLowerCase() === "paid") ||
+            (statusFilter === "pending" && entry["Payment Status"].toLowerCase() === "pending");
           return matchesHouse && matchesStatus;
         });
+
         if (filteredData.length === 0) {
           table.style.display = "none";
           alert("No records found!");
           return;
         }
-        table.style.display = "table"; // Show the table
+
+        table.style.display = "table"; // Show table
         filteredData.forEach((entry) => {
           const tr = document.createElement("tr");
-          tr.classList.add(
-            entry["Payment Status"].toLowerCase().includes("pending")
-              ? "pending-row"
-              : "paid-row"
-          );
+          tr.className = entry["Payment Status"].toLowerCase() === "pending" ? "pending-row" : "paid-row";
+
           headers.forEach((header) => {
             const td = document.createElement("td");
-            if (
-              header === "Payment Receipt" &&
-              entry[header]?.startsWith("http")
-            ) {
-              const a = document.createElement("a");
-              a.href = entry[header];
-              a.target = "_blank";
-              a.textContent = "View Receipt";
-              td.appendChild(a);
-            } else {
-              td.textContent = entry[header] || "-";
-            }
+            td.textContent = entry[header] || "-";
             tr.appendChild(td);
           });
+
           tableBody.appendChild(tr);
         });
       }
-      document
-        .getElementById("searchBtn")
-        .addEventListener("click", searchData);
-      // Fetch data on load and hide loader
-      window.addEventListener("load", function () {
-        console.log("Page loaded");
-        fetchData();
-        setTimeout(() => {
-          const loader = document.getElementById("loader");
-          if (loader) {
-            loader.classList.add("hidden");
-            console.log("Loader hidden");
-          }
-        }, 1000); // Hide loader after 1 second
-      });
+
+      // Event Listener for Search Button
+      document.getElementById("searchBtn").addEventListener("click", searchData);
+
+      // Fetch Data on Page Load
+      window.addEventListener("load", fetchData);
     </script>
   </body>
 </html>
