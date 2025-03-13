@@ -1,174 +1,228 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Society Maintenance Payment Status</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            text-align: center;
-            background-color: #f1f3e5;
-        }
-        #logo {
-            width: 100%;
-            max-width: 800px;
-            display: block;
-            margin: auto;
-        }
-        table {
-            width: 80%;
-            margin: 20px auto;
-            border-collapse: collapse;
-            border: 2px solid black;
-            text-align: center;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 10px;
-            font-size: 16px;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-        .paid-row {
-            background-color: #006400; /* Dark Green */
-            color: white;
-        }
-        .pending-row {
-            background-color: #8B0000; /* Dark Red */
-            color: white;
-            font-weight: bold;
-        }
-        .container {
-            margin-bottom: 20px;
-        }
-        input, select, button {
-            padding: 8px;
-            font-size: 16px;
-            margin: 5px;
-        }
-        #qrcode {
-            width: 200px;
-            margin-top: 20px;
-        }
+      /* Loader Styles */
+      #loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #fff; /* Same as page background */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+      }
+
+      #loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      /* Page Content Styling */
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        text-align: center;
+        background: url('https://raw.githubusercontent.com/Nimeshpatel90/Harikrupa-Society/c9979706902be5ce4affe8f00ea6228bb4bbfe20/wave.svg') no-repeat center bottom;
+        background-size: cover;
+        height: 100%;
+        width: 100%;
+      }
+
+      #logo {
+        max-width: 800px;
+        display: block;
+        margin: auto;
+      }
+
+      table {
+        width: 80%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        text-align: center;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        border: 1px solid #ccc; /* Optional border */
+      }
+
+      /* Row Styling Based on Payment Status */
+      .paid-row {
+        color: black; /* Black font for paid */
+      }
+
+      .pending-row {
+        color: white; /* White font for pending */
+        font-weight: bold; /* Bold for pending */
+        background-color: rgba(255, 0, 0, 0.4); /* Optional for visibility */
+      }
+
+      .container {
+        margin: 20px auto;
+      }
     </style>
-</head>
-<body>
-    <img id="logo" src="https://raw.githubusercontent.com/Nimeshpatel90/society-maintenance/main/Logo.jpeg" alt="Harikrupa Society Logo">
+  </head>
+  <body>
+
+
+    <!-- Page Content -->
+    <img
+      id="logo"
+      src="https://raw.githubusercontent.com/Nimeshpatel90/society-maintenance/main/Logo.png"
+      alt="Society Logo"
+    />
     <h2>Society Maintenance Payment Status</h2>
-
     <div class="container">
-        <label for="searchHouse">Search by House No.:</label>
-        <input type="text" id="searchHouse" placeholder="Enter House No. (e.g., B/07)">
-
-        <label for="statusFilter">Filter by Status:</label>
-        <select id="statusFilter">
-            <option value="all">All</option>
-            <option value="paid">Paid</option>
-            <option value="pending">Pending</option>
-        </select>
-
-        <button id="searchBtn">Search</button>
+      <label for="searchHouse">Search by House No.:</label>
+      <input
+        type="text"
+        id="searchHouse"
+        placeholder="Enter House No. (e.g., B/07)"
+      />
+      <label for="statusFilter">Filter by Status:</label>
+      <select id="statusFilter">
+        <option value="all">All</option>
+        <option value="paid">Paid</option>
+        <option value="pending">Pending</option>
+      </select>
+      <button id="searchBtn">Search</button>
     </div>
-
-    <table id="paymentTable" style="display:none;">
-        <thead>
-            <tr id="tableHeader"></tr>
-        </thead>
-        <tbody></tbody>
+    <table id="paymentTable" style="display: none;">
+      <thead>
+        <tr id="tableHeader"></tr>
+      </thead>
+      <tbody></tbody>
     </table>
-
-    <img id="qrcode" src="https://raw.githubusercontent.com/Nimeshpatel90/Harikrupa-Society/refs/heads/main/qrcode.jpeg" alt="QR Code">
-    <p><b>Please make payment using this QR Code and share payment details to this mobile: 9723151500</b></p>
-
+    <img
+      id="qrcode"
+      src="https://raw.githubusercontent.com/Nimeshpatel90/Harikrupa-Society/refs/heads/main/qrcode.jpeg"
+      alt="QR Code for Payment"
+    />
+    <p>
+      <b
+        >Please make payment using the QR Code and share details on Harikrupa
+        Society WhatsApp Group</b
+      >
+    </p>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script>
-        const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuo32w3JKptA5vRALRwDIpTK8f7e7clNfXc5VC7RpLDa_nd2e2rVfyqpZ8wEbg9Zp6ESAydUw35DIO/pub?gid=484381785&single=true&output=csv";
-        let paymentData = [];
-        let headers = [];
+      const sheetUrl =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuo32w3JKptA5vRALRwDIpTK8f7e7clNfXc5VC7RpLDa_nd2e2rVfyqpZ8wEbg9Zp6ESAydUw35DIO/pub?gid=484381785&single=true&output=csv";
+      let paymentData = [];
+      let headers = [];
+      async function fetchData() {
+        try {
+          const response = await fetch(sheetUrl + "&t=" + new Date().getTime());
+          if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+          }
+          const csvData = await response.text();
+          Papa.parse(csvData, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function (results) {
+              headers = results.meta.fields;
+              paymentData = results.data;
+              updateTableHeaders();
+            },
+          });
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          alert("Unable to fetch data. Please try again later.");
+        }
+      }
 
-        async function fetchData() {
-            try {
-                const response = await fetch(sheetUrl + "&t=" + new Date().getTime());
-                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-                
-                const csvData = await response.text();
-                Papa.parse(csvData, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: function(results) {
-                        headers = results.meta.fields;
-                        paymentData = results.data;
-                        updateTableHeaders();
-                    }
-                });
-            } catch (error) {
-                console.error("Error fetching data:", error);
+      function updateTableHeaders() {
+        const headerRow = document.getElementById("tableHeader");
+        headerRow.innerHTML = ""; // Clear any existing headers
+        headers.forEach((header) => {
+          const th = document.createElement("th");
+          th.textContent = header;
+          headerRow.appendChild(th);
+        });
+      }
+
+      function searchData() {
+        const searchInput = document
+          .getElementById("searchHouse")
+          .value.trim()
+          .toUpperCase();
+        const statusFilter = document.getElementById("statusFilter").value;
+        const tableBody = document.querySelector("#paymentTable tbody");
+        const table = document.getElementById("paymentTable");
+        tableBody.innerHTML = ""; // Clear existing rows
+        const filteredData = paymentData.filter((entry) => {
+          const matchesHouse =
+            !searchInput ||
+            entry["House No."].toUpperCase() === searchInput;
+          const matchesStatus =
+            statusFilter === "all" ||
+            (statusFilter === "paid" &&
+              entry["Payment Status"]
+                .toLowerCase()
+                .includes("paid")) ||
+            (statusFilter === "pending" &&
+              entry["Payment Status"]
+                .toLowerCase()
+                .includes("pending"));
+          return matchesHouse && matchesStatus;
+        });
+        if (filteredData.length === 0) {
+          table.style.display = "none";
+          alert("No records found!");
+          return;
+        }
+        table.style.display = "table"; // Show the table
+        filteredData.forEach((entry) => {
+          const tr = document.createElement("tr");
+          tr.classList.add(
+            entry["Payment Status"].toLowerCase().includes("pending")
+              ? "pending-row"
+              : "paid-row"
+          );
+          headers.forEach((header) => {
+            const td = document.createElement("td");
+            if (
+              header === "Payment Receipt" &&
+              entry[header]?.startsWith("http")
+            ) {
+              const a = document.createElement("a");
+              a.href = entry[header];
+              a.target = "_blank";
+              a.textContent = "View Receipt";
+              td.appendChild(a);
+            } else {
+              td.textContent = entry[header] || "-";
             }
-        }
-
-        function updateTableHeaders() {
-            const headerRow = document.getElementById("tableHeader");
-            headerRow.innerHTML = "";
-            headers.forEach(header => {
-                const th = document.createElement("th");
-                th.textContent = header;
-                headerRow.appendChild(th);
-            });
-        }
-
-        function searchData() {
-            const searchInput = document.getElementById("searchHouse").value.trim().toUpperCase();
-            const statusFilter = document.getElementById("statusFilter").value;
-            const tableBody = document.querySelector("#paymentTable tbody");
-            const table = document.getElementById("paymentTable");
-            tableBody.innerHTML = "";
-
-            const filteredData = paymentData.filter(entry => {
-                const matchesHouse = !searchInput || entry["House No."].toUpperCase() === searchInput;
-                const matchesStatus = statusFilter === "all" || 
-                    (statusFilter === "paid" && entry["Payment Status"].toLowerCase().includes("paid")) ||
-                    (statusFilter === "pending" && entry["Payment Status"].toLowerCase().includes("pending"));
-                return matchesHouse && matchesStatus;
-            });
-
-            if (filteredData.length === 0) {
-                table.style.display = "none";
-                alert("No records found!");
-                return;
-            }
-
-            table.style.display = "table";
-            filteredData.forEach(entry => {
-                const tr = document.createElement("tr");
-                if (entry["Payment Status"].toLowerCase().includes("pending")) {
-                    tr.classList.add("pending-row");
-                } else {
-                    tr.classList.add("paid-row");
-                }
-
-                headers.forEach(header => {
-                    const td = document.createElement("td");
-                    if (header === "Payment Receipt" && entry[header]?.startsWith("http")) {
-                        const a = document.createElement("a");
-                        a.href = entry[header];
-                        a.target = "_blank";
-                        a.textContent = "View Receipt";
-                        td.appendChild(a);
-                    } else {
-                        td.textContent = entry[header] || "-";
-                    }
-                    tr.appendChild(td);
-                });
-                tableBody.appendChild(tr);
-            });
-        }
-
-        document.getElementById("searchBtn").addEventListener("click", searchData);
+            tr.appendChild(td);
+          });
+          tableBody.appendChild(tr);
+        });
+      }
+      document
+        .getElementById("searchBtn")
+        .addEventListener("click", searchData);
+      // Fetch data on load and hide loader
+      window.addEventListener("load", function () {
+        console.log("Page loaded");
         fetchData();
-        setInterval(fetchData, 60000); // Fetch data every minute
+        setTimeout(() => {
+          const loader = document.getElementById("loader");
+          if (loader) {
+            loader.classList.add("hidden");
+            console.log("Loader hidden");
+          }
+        }, 1000); // Hide loader after 1 second
+      });
     </script>
-</body>
+  </body>
 </html>
