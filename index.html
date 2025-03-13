@@ -18,27 +18,27 @@
             margin: auto;
         }
         table {
-            width: 90%;
-            margin: auto;
+            width: 80%;
+            margin: 20px auto;
             border-collapse: collapse;
-            display: none;
             border: 2px solid black;
+            text-align: center;
         }
         th, td {
             border: 1px solid black;
-            padding: 8px;
-            text-align: center;
+            padding: 10px;
+            font-size: 16px;
         }
         th {
             background-color: #f4f4f4;
         }
         .paid-row {
-            background-color: #d4edda;
-            color: #155724;
+            background-color: #006400; /* Dark Green */
+            color: white;
         }
         .pending-row {
-            background-color: #f8d7da !important;
-            color: #721c24;
+            background-color: #8B0000; /* Dark Red */
+            color: white;
             font-weight: bold;
         }
         .container {
@@ -53,7 +53,7 @@
             width: 200px;
             margin-top: 20px;
         }
-            </style>
+    </style>
 </head>
 <body>
     <img id="logo" src="https://raw.githubusercontent.com/Nimeshpatel90/society-maintenance/main/Logo.jpeg" alt="Harikrupa Society Logo">
@@ -81,7 +81,7 @@
     </table>
 
     <img id="qrcode" src="https://raw.githubusercontent.com/Nimeshpatel90/Harikrupa-Society/refs/heads/main/qrcode.jpeg" alt="QR Code">
-    <p><b>Please make payment using this QR Code and share payment details to whatsapp group of "Harikrupa Soc Group"</b></p>
+    <p><b>Please make payment using this QR Code and share payment details to this mobile: 9723151500</b></p>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script>
@@ -129,7 +129,7 @@
             const filteredData = paymentData.filter(entry => {
                 const matchesHouse = !searchInput || entry["House No."].toUpperCase() === searchInput;
                 const matchesStatus = statusFilter === "all" || 
-                    (statusFilter === "paid" && entry["Payment Status"].toLowerCase().includes("done")) ||
+                    (statusFilter === "paid" && entry["Payment Status"].toLowerCase().includes("paid")) ||
                     (statusFilter === "pending" && entry["Payment Status"].toLowerCase().includes("pending"));
                 return matchesHouse && matchesStatus;
             });
