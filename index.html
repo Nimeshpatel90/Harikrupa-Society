@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Maintenance Payment Dashboard</title>
+    <title>Society Maintenance Payment Status</title>
     <style>
       /* General Styling */
       body {
@@ -52,7 +52,7 @@
       }
 
       .pending-row {
-        background-color: rgba(255, 127, 127, .1);
+        background-color: rgba(255, 127, 127, 0.1);
         color: rgba(112, 41, 99, 1);
         font-weight: bold;
       }
@@ -93,29 +93,24 @@
       // Fetch Data Function
       async function fetchData() {
         try {
-          // Log the URL being fetched
           console.log("Fetching data from:", sheetUrl);
-          const response = await fetch(sheetUrl + "&t=" + new Date().getTime()); // Prevent caching with a timestamp
-          
-          // Check for HTTP errors
+          const response = await fetch(sheetUrl + "&t=" + new Date().getTime());
           if (!response.ok) {
             throw new Error(`HTTP Error: ${response.status}`);
           }
 
-          // Parse the raw CSV text
           const csvData = await response.text();
           console.log("Raw CSV Data:", csvData);
 
-          // Use PapaParse to convert CSV into JSON
           Papa.parse(csvData, {
             header: true,
             skipEmptyLines: true,
             complete: function (results) {
-              console.log("Parsed Data:", results.data); // Debug parsed data
+              console.log("Parsed Data:", results.data);
               paymentData = results.data;
               headers = results.meta.fields;
               updateTableHeaders();
-            }
+            },
           });
         } catch (error) {
           console.error("Data fetch error:", error);
@@ -126,7 +121,7 @@
       // Update Table Headers
       function updateTableHeaders() {
         const tableHeader = document.getElementById("tableHeader");
-        tableHeader.innerHTML = ""; // Clear existing headers
+        tableHeader.innerHTML = "";
         headers.forEach((header) => {
           const th = document.createElement("th");
           th.textContent = header;
@@ -135,14 +130,14 @@
         console.log("Table headers updated.");
       }
 
-      // Search Data Function
+      // Search and Display Data
       function searchData() {
         const searchInput = document.getElementById("searchHouse").value.trim().toUpperCase();
         const statusFilter = document.getElementById("statusFilter").value;
         const tableBody = document.querySelector("#paymentTable tbody");
         const table = document.getElementById("paymentTable");
 
-        tableBody.innerHTML = ""; // Clear existing rows
+        tableBody.innerHTML = "";
 
         const filteredData = paymentData.filter((entry) => {
           const matchesHouse = !searchInput || entry["House No."].toUpperCase() === searchInput;
@@ -159,14 +154,23 @@
           return;
         }
 
-        table.style.display = "table"; // Show table
+        table.style.display = "table";
         filteredData.forEach((entry) => {
           const tr = document.createElement("tr");
           tr.className = entry["Payment Status"].toLowerCase() === "pending" ? "pending-row" : "paid-row";
 
           headers.forEach((header) => {
             const td = document.createElement("td");
-            td.textContent = entry[header] || "-";
+            if (header === "Payment Receipt") {
+              // Add clickable receipt link
+              const link = document.createElement("a");
+              link.href = entry[header];
+              link.textContent = "View Receipt";
+              link.target = "_blank";
+              td.appendChild(link);
+            } else {
+              td.textContent = entry[header] || "-";
+            }
             tr.appendChild(td);
           });
 
