@@ -82,12 +82,8 @@
         <tbody></tbody>
     </table>
 
-    <p id="noResults" style="display:none; color: red; font-weight: bold;">No records found!</p>
-
-    <img id="qrcode" src="qrcode.jpeg" alt="QR Code for Payment">
-    <p style="text-align: center; font-weight: bold; color: #333; margin-top: 10px;">
-        Please make payment using this QR Code and share payment details to this mobile: <b>9723151500</b>
-    </p>
+    <img id="qrcode" src="qrcode.png" alt="QR Code">
+    <p><b>Please make payment using this QR Code and share payment details to this mobile: 9723151500</b></p>
 
     <script>
         const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuo32w3JKptA5vRALRwDIpTK8f7e7clNfXc5VC7RpLDa_nd2e2rVfyqpZ8wEbg9Zp6ESAydUw35DIO/pub?gid=484381785&single=true&output=csv";
@@ -96,37 +92,30 @@
 
         async function fetchData() {
             try {
-                console.log("🔄 Fetching latest data...");
                 const response = await fetch(sheetUrl + "&t=" + new Date().getTime());
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-
+                
                 const data = await response.text();
-                const rows = data.split("\n").map(row => row.split(","));
-
-                if (rows.length < 2) {
-                    console.error("❌ No data found in the sheet!");
-                    return;
-                }
-
-                headers = rows[0].map(h => h.trim());
+                const rows = data.split("\n").map(row => row.split(/\s*,\s*/));
+                
+                headers = rows[0];
                 paymentData = rows.slice(1).map(row => {
                     let obj = {};
                     headers.forEach((header, index) => {
-                        obj[header] = row[index] ? row[index].trim() : "-";
+                        obj[header] = row[index] || "-";
                     });
                     return obj;
                 });
 
                 updateTableHeaders();
             } catch (error) {
-                console.error("❌ Error fetching data:", error);
+                console.error("Error fetching data:", error);
             }
         }
 
         function updateTableHeaders() {
             let headerRow = document.getElementById("tableHeader");
             headerRow.innerHTML = "";
-
             headers.forEach(header => {
                 let th = document.createElement("th");
                 th.textContent = header;
@@ -139,31 +128,25 @@
             let statusFilter = document.getElementById("statusFilter").value;
             let tableBody = document.querySelector("#paymentTable tbody");
             let table = document.getElementById("paymentTable");
-            let noResults = document.getElementById("noResults");
-
             tableBody.innerHTML = "";
-
+            
             let filteredData = paymentData.filter(entry => {
-                let matchesHouse = !searchInput || entry["House No."].toUpperCase().includes(searchInput);
-                let matchesStatus = statusFilter === "all" ||
-                    (statusFilter === "paid" && entry["Payment Status"].toLowerCase().includes("paid")) ||
+                let matchesHouse = !searchInput || entry["House No."].toUpperCase() === searchInput;
+                let matchesStatus = statusFilter === "all" || 
+                    (statusFilter === "paid" && entry["Payment Status"].toLowerCase().includes("done")) ||
                     (statusFilter === "pending" && entry["Payment Status"].toLowerCase().includes("pending"));
-
                 return matchesHouse && matchesStatus;
             });
-
+            
             if (filteredData.length === 0) {
                 table.style.display = "none";
-                noResults.style.display = "block";
+                alert("No records found!");
                 return;
             }
 
-            noResults.style.display = "none";
             table.style.display = "table";
-
             filteredData.forEach(entry => {
                 let tr = document.createElement("tr");
-
                 if (entry["Payment Status"].toLowerCase().includes("pending")) {
                     tr.classList.add("pending-row");
                 } else {
@@ -172,23 +155,17 @@
 
                 headers.forEach(header => {
                     let td = document.createElement("td");
-
-                    if (header.toLowerCase().includes("receipt")) {
-                        if (entry[header] && entry[header] !== "-") {
-                            let link = document.createElement("a");
-                            link.href = entry[header];
-                            link.target = "_blank";
-                            link.textContent = "View Receipt";
-                            link.style.color = "blue";
-                            link.style.textDecoration = "underline";
-                            td.appendChild(link);
-                        } else {
-                            td.textContent = "-";
-                        }
+                    let cell = entry[header] || "-";
+                    
+                    if (header === "Payment Receipt" && cell.startsWith("http")) {
+                        let a = document.createElement("a");
+                        a.href = cell;
+                        a.target = "_blank";
+                        a.textContent = "View Receipt";
+                        td.appendChild(a);
                     } else {
-                        td.textContent = entry[header] || "-";
+                        td.innerHTML = cell;
                     }
-
                     tr.appendChild(td);
                 });
                 tableBody.appendChild(tr);
